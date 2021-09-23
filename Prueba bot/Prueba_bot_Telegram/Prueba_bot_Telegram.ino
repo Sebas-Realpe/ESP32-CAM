@@ -18,7 +18,7 @@
 #include <UniversalTelegramBot.h>
 #include <ArduinoJson.h>
 
-const char* ssid = "Gonzalez";
+const char* ssid = "-GONZALEZ-";
 const char* password = "1061765667";
 
 // Initialize Telegram BOT
@@ -30,6 +30,7 @@ String BOTtoken = "1957408116:AAEYyufGkbA9pxhI884wcZ0pxinhsgJM3KA";  // your Bot
 String CHAT_ID = "1975933460";
 
 bool sendPhoto = false;
+bool sendRSSI = false;
 
 WiFiClientSecure clientTCP;
 UniversalTelegramBot bot(BOTtoken, clientTCP);
@@ -129,6 +130,7 @@ void handleNewMessages(int numNewMessages) {
       welcome += "Use the following commands to interact with the ESP32-CAM \n";
       welcome += "/photo : takes a new photo\n";
       welcome += "/flash : toggles flash LED \n";
+      welcome += "/RSSI : Valor RSSI";
       bot.sendMessage(CHAT_ID, welcome, "");
     }
     if (text == "/flash") {
@@ -139,6 +141,10 @@ void handleNewMessages(int numNewMessages) {
     if (text == "/photo") {
       sendPhoto = true;
       Serial.println("New photo request");
+    }
+    if (text == "/RSSI") {
+      sendRSSI = true;
+      Serial.print("New RSSI signal requested");
     }
   }
 }
@@ -224,6 +230,18 @@ String sendPhotoTelegram() {
   return getBody;
 }
 
+
+
+String SendRSSIsignal(){
+
+  Serial.print("RSSI: ");
+  long rssi = WiFi.RSSI();
+  String x = String(rssi);
+  Serial.print(rssi);
+  bot.sendMessage(CHAT_ID, x, "");
+}
+
+
 void setup(){
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); 
   // Init Serial Monitor
@@ -258,6 +276,13 @@ void loop() {
     sendPhotoTelegram(); 
     sendPhoto = false; 
   }
+
+  if (sendRSSI){
+    Serial.println("Valor RSSI ");
+    SendRSSIsignal();
+    sendRSSI = false;
+  }
+  
   if (millis() > lastTimeBotRan + botRequestDelay)  {
     int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
     while (numNewMessages) {
@@ -266,4 +291,5 @@ void loop() {
       numNewMessages = bot.getUpdates(bot.last_message_received + 1);
     }
     lastTimeBotRan = millis();
-  }  }
+  }
+}
